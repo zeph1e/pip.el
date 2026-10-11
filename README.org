@@ -61,15 +61,15 @@ With the help of [[https://github.com/astoff/buffer-env][buffer-env]] and [[http
     :hook
     ((hack-local-variables . buffer-env-update)))
 
-  (with-eval-after-load 'inheritenv
+  (use-package inheritenv
+    :vc (:url "https://github.com/purcell/inheritenv" :rev :newest)
+    :config
     (mapc (lambda (fn) (inheritenv-add-advice fn))
-          '(run-python
-            shell
-            compile
-            shell-command
-            ;; async-shell-command & shell-command-to-string are required!!
-            async-shell-command
-            shell-command-to-string)))
+            '(run-python
+              shell compile
+              async-shell-command
+              shell-command
+              shell-command-to-string)))
 #+END_SRC
 
 You should add advice for =async-shell-command= and =shell-command-to-string= like above.
