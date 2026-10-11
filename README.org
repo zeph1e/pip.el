@@ -1,0 +1,80 @@
+#+TITLE: pip.el
+#+AUTHOR: Yunsik Jang <z3ph1e@gmail.com>
+
+pip.el is an Emacs minor mode that integrates Emacs with the pip package manager.
+
+* Features
+
+This supports very simple features, installing and uninstalling for now.
+- In installation, =pip.el= tries to give a fully up-to-date package list as candidates
+- In uninstallation, =pip.el= tries to give the list of installed packages as candidates
+
+The first installation downloads the PyPI package index (about 15 MB) into =pip-cache-dir=.
+Later calls download it again only when PyPI reports a change.
+
+* Installation
+
+pip.el requires Emacs 27.1 or later and a =pip= executable in =exec-path=.
+
+With Emacs 30 or later:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package pip
+    :vc (:url "https://github.com/zeph1e/pip.el"))
+#+END_SRC
+
+Or clone the repository and load it manually:
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'load-path "/path/to/pip.el")
+  (require 'pip)
+#+END_SRC
+
+* Usage
+
+=M-x pip-install= and =M-x pip-uninstall= work without the minor mode.
+=pip-mode= adds these key bindings in the current buffer:
+
+| Key       | Command         | Action                                          |
+|-----------+-----------------+-------------------------------------------------|
+| =C-c p i= | =pip-install=   | Install or upgrade a package (=pip install -U=) |
+| =C-c p u= | =pip-uninstall= | Uninstall an installed package                  |
+
+To enable it in Python buffers:
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'python-mode-hook #'pip-mode)
+  (add-hook 'python-ts-mode-hook #'pip-mode)
+#+END_SRC
+
+The package list cache is kept in =pip-cache-dir=, which defaults to =.cache/pip/= under =user-emacs-directory=.
+
+* Virtual Environment (venv)
+
+pip.el can work with a Python venv, but it does not manage the venv itself.
+With the help of [[https://github.com/astoff/buffer-env][buffer-env]] and [[https://github.com/purcell/inheritenv][inheritenv]], you may manage PIP packages in your venv.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package buffer-env
+    :custom
+    (buffer-env-script-name '(".envrc" ".venv/bin/activate" "venv/bin/activate"))
+    :hook
+    ((hack-local-variables . buffer-env-update)))
+
+  (with-eval-after-load 'inheritenv
+    (mapc (lambda (fn) (inheritenv-add-advice fn))
+          '(run-python
+            shell
+            compile
+            shell-command
+            ;; async-shell-command & shell-command-to-string are required!!
+            async-shell-command
+            shell-command-to-string)))
+#+END_SRC
+
+You should add advice for =async-shell-command= and =shell-command-to-string= like above.
+Otherwise, pip.el cannot use =pip= executable in venv.
+
+* License
+
+[[https://www.wtfpl.net/][WTFPL version 2]]
