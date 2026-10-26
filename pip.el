@@ -137,13 +137,23 @@ If cache is empty or invalid, it will be updated."
     (pip-cache--update))
   (pip-cache--get key))
 
+(defun pip-util--privileged-p ()
+  (not (file-writable-p
+        (nth 1 (split-string (shell-command-to-string
+                              "pip show pip | grep Location"))))))
+
+(defun pip-util--run-command (command)
+  (let ((command (if (pip-util--privileged-p)
+                     (concat "sudo " command) command)))
+    (async-shell-command command)))
+
 (defun pip-install (package)
   "Install PACKAGE with PIP."
   (interactive
    (list (completing-read "Package to install: "
                           (pip-cache-get :packages) nil t)))
   (unless (string= package "")
-    (async-shell-command
+    (pip-util--run-command
      (format "pip install -U %s" (shell-quote-argument package)))))
 
 (defun pip-uninstall (package)
@@ -160,7 +170,7 @@ If cache is empty or invalid, it will be updated."
             (error nil))
           nil t)))
   (unless (string= package "")
-    (async-shell-command
+    (pip-util--run-command
      (format "pip uninstall %s" (shell-quote-argument package)))))
 
 (defvar pip-mode-keymap
